@@ -440,3 +440,26 @@ $$\textbf{x} = \begin{bmatrix}x\cr y\end{bmatrix}$$
     - Under orthography, structure and motion simultaneously estimated using *factorization* (singular value decomposition)
       - [https://en.wikipedia.org/wiki/Tomasi%E2%80%93Kanade_factorization](https://en.wikipedia.org/wiki/Tomasi%E2%80%93Kanade_factorization)
       - [https://en.wikipedia.org/wiki/Structure_from_motion](https://en.wikipedia.org/wiki/Structure_from_motion)
+  - *para-perspective*
+    - also first projected onto a local reference parallel to image plane
+    - rather than projected orthogonally to this plane, projected *parallel* to line of sight of object center
+    - followed by usual projection onto final image plane (which amounts to scaling)  
+  - Combo of these two projections *affine*
+    - *affine* transformations preserves lines and parallelism
+      - [https://en.wikipedia.org/wiki/Affine_transformation](https://en.wikipedia.org/wiki/Affine_transformation)
+      $$\mathbf{\~x} = \begin{bmatrix} a_{00}&a_{01}&a_{02}&a_{03}\cr a_{10}&a_{11}&a_{12}&a_{13}\cr 0&0&0&1 \end{bmatrix}\mathbf{\~p}$$
+  - para-perspective provides more accurate projection than scaled orthography without incurring added complexity of per-pixel perspective division
+    - invalidates traditional factorization methods
+    - What the helly?
+    - The citation for said statement: `Poelman, C. J. and Kanade, T. (1997). A paraperspective factorization method for shape and motion recovery. IEEE Transactions on Pattern Analysis and Machine Intelligence, 19(3):206–218.`
+- Perspective
+  - Most commonly used projection
+  - true 3D *perspective* (Figure 2.7e)
+  - Points projected onto image plane by dividing them by their $z$ component
+  - inhomogenous coordinates:
+  $$\mathbf{\bar{x}} = \mathcal{P}_z(\mathbf{p}) = \begin{bmatrix} x/z \cr y/z \cr 1\end{bmatrix}$$
+    - \mathcal{letter} for (script L)
+  - homogenous coordinates:
+  $$\mathbf{\~x} = \begin{bmatrix} 1&0&0&0 \cr 0&1&0&0 \cr 0&0&1&0 \end{bmatrix}\mathbf{\~p}$$
+    - Drop $w$ component of $\mathbf{p}$
+      - Not possible to recover *distance* of 3D point from image
