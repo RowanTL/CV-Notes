@@ -37,6 +37,9 @@ $$\textbf{x} = \begin{bmatrix}x\cr y\end{bmatrix}$$
     - System in projective geometry
     - Allows points, including those at infintiy, to be represented using finite coordinates
       - Not 3D???
+      - Points with $w = 0$ lie at infinity
+        - All points that lie along a line with this direction will **converge to this point at infinty** in projective space
+        - I like to think about this as a line/plane that goes/expands to infinity
     - [youtube video explanation](https://youtu.be/JSLG8n_IY9s?si=EhkGYZt5mLzrqrtj)
       - Represent coordinates in 2D with a 3-Vector
       $$\begin{bmatrix}x\cr y\end{bmatrix} \Rightarrow \begin{bmatrix}x\cr y\cr w\end{bmatrix}$$
@@ -463,3 +466,74 @@ $$\textbf{x} = \begin{bmatrix}x\cr y\end{bmatrix}$$
   $$\mathbf{\~x} = \begin{bmatrix} 1&0&0&0 \cr 0&1&0&0 \cr 0&0&1&0 \end{bmatrix}\mathbf{\~p}$$
     - Drop $w$ component of $\mathbf{p}$
       - Not possible to recover *distance* of 3D point from image
+  - two-step projection
+    1) Projects 3D coordinates into *normalized device coordinates* $(x, y, z) \isin [-1, 1] \times [-1, 1] \times [0, 1]$
+    2) Rescales coordinates to integer pixel coordinates using *viewport* transformation
+      - [https://www.geeksforgeeks.org/dsa/window-to-viewport-transformation-in-computer-graphics-with-implementation/](https://www.geeksforgeeks.org/dsa/window-to-viewport-transformation-in-computer-graphics-with-implementation/)
+    - initial perspective projection represented by 4 x 4 matrix
+    $$\mathbf{\~x} = \begin{bmatrix} 1&0&0&0 \cr 0&1&0&0 \cr 0&0&-z_{far}/z_{range}&z_{near}z_{far}/z_{range} \cr 0&0&1&0 \end{bmatrix}\mathbf{\~p}$$
+      - Where $z_{near}$ and $z_{far}$ are the near and far *clipping planes* and $z_{range} = z_{far} - z_{near}$ 
+    - Note: first two rows scaled by focal length and aspect ratio so visible says are mapped to $(x, y, z) \in [-1, 1]^2$
+    - Keep third row bc visibility operations, like *z-buffering*, require a depth for every graphical element rendered
+      - [wikipedia z-buffering](https://en.wikipedia.org/wiki/Z-buffering), [good/simple explanation](https://vitademyglobal.com/computer-science/z-buffering/)
+    - If set $z_{near} = 1, z_{far} \rightarrow \infin$ and switch sign of 3rd row, the third element of the normalized screen vector becomes the inverse depth (the *disparity*)
+      - [disparity baeldung](https://www.baeldung.com/cs/disparity-map-stereo-vision)
+        - Good for cameras moving around outdoors
+          - Inverse depth to camera often a more well-conditioned parameterization than direct 3D distance
+  - *range sensors* and stereo matching algorithms can compute such values
+    - map sensor-based depth or disparity value $d$ directly back to a 3D location using inverse 4 x 4 matrix
+      - Can do so if represent perspective projection using full-rank 4 x 4 matrix
+        - [Rank](https://en.wikipedia.org/wiki/Rank_(linear_algebra)): dimension of vector space spanned by its columns
+          - Or maximal number of linearly independent columns of $A$
+        - Full Rank: If rank = largest possible for a matrix of the same dimensions
+- Camera intrinsics
+  - Once projected 3D point through ideal pinhole using projection matrix, must transform resulting coordinate according to pixel sensor spacing and relative position of sensor plane to origin
+  ![Projection of a 3D camera-centered point onto sensor planes located at location p](./images/ch2/fig2_8_proj_3D_cam_centered_point.png)
+  - Overview of this section:
+    1) Present mapping from 2D pixel coordinates to 3D rays using a sensor homography $\mathbf{M}_s$
+    2) Relate quantities to more commonly used camera intrinsic matrix $\mathbf{K}$, which is used to map 3D camera-centered points $\mathbf{p}_c$ to 2D pixel coordinates $\mathbf{\~x}_s$
+  - Image sensors return pixel values indexed by integer *pixel coordinates* $(x_s, y_s)$
+    - Coordinates starting at upper-left corner (quadrant 4)
+  - To map pixel centers to 3D coordinates:
+    1) scale $(x_s, y_s)$ values by pixel spacings (s_x, s_y) and then describe orientation of sensor array relative to camera projection center $\mathbf{O}_c$ with an origin $\mathbf{c}_s$ and 3D rotation $\mathbf{R}_s$
+    - Combined 2D to 3D projection written as:
+    $$
+    \mathbf{p} =
+    \begin{bmatrix}
+    \mathbf{R}_s & \mathbf{c}_s
+    \end{bmatrix}
+    \begin{bmatrix}
+    s_x&0&0 \cr 0&s_y&0 \cr 0&0&0 \cr 0&0&1
+    \end{bmatrix}
+    \begin{bmatrix}
+    x_s&y_s&1
+    \end{bmatrix}
+    = \mathbf{M}_s \mathbf{\bar{x}}_s
+    $$
+    - 1st two columns of 3 x 3 matrix $\mathbf{M}_s$ are the 3D vectors corresponding to unit steps in the image pixel array along the $x_s$ and $y_s$ directions
+      - 3rd column is 3D image array origin $\mathbf{c}_s$
+  - matrix $\mathbf{M}_s$ parameterized by 8 unknowns
+    - 3 parameters describing rotation $\mathbf{R}_s$
+    - 3 parameters describing translation $\mathbf{c}_s$
+    - 2 scale factors $(s_x,s_y)$
+    - Note: No possibility of *skew*
+      - [https://en.wikipedia.org/wiki/Skew_lines](https://en.wikipedia.org/wiki/Skew_lines)
+    - In practice: only 7 degrees of freedom
+      - distance of sensor from origin cannot be teased apart from sensor spacing based on external image measurement alone
+  - Estimating camera model $\mathbf{M}_s$ with 7 degrees of freedom impractical
+    - i.e. first two columns are orthogonal after appropriate rescaling
+    - so assume general 3 x 3 homogeneous matrix form
+  - Relationship between 3D pixel center $\mathbf{p}$ and 3D camera-centered point $\mathbf{p}_c$ given by unknown scaling $s$, $\mathbf{p} = s\mathbf{p}_c$
+  - Complete projection between $\mathbf{p}_c$ and homogeneous version of pixel address $\mathbf{\~x}_s$:
+  $$\mathbf{\~x}_s = \alpha\mathbf{M}_s^{-1}\mathbf{p}_c = \mathbf{Kp}_c$$
+  - The 3 x 3 matrix $\mathbf{K}$ is *calibration matrix* and describes camera *instrinsics*
+    - camera's orientation in space called *extrinsics*
+  - $\mathbf{K}$ has 7 degrees of freedom in theory and 8 in practice
+  - cannot recover full $\mathbf{K}$ matix based on external measurement alone
+  - When calibrating a camera based on external 3D points or other measurments, end up estimating intrinsic $(\mathbf{K})$ and extrinsic $(\mathbf{R, t})$ camera parameters simultaneously using a series of measurements
+  $$\mathbf{\~x}_s = \mathbf{K\begin{bmatrix}\mathbf{R}&\mathbf{t}\end{bmatrix} p}_w = \mathbf{Pp}_w$$
+    - where $\mathbf{p}_w$ are known 3D world coordinates and
+  $$\mathbf{P = K[R|t]}$$
+    - Known as the *camera matrix*
+      - Can post-multiply $\mathbf{K}$ by $\mathbf{R}_1$ and pre-multiply $\mathbf{[R|t]}$ by $\mathbf{R}^T_1$
+      - Impossible based on image measurements alone to know true orientation of sensor and true camera intrinsics
