@@ -537,3 +537,64 @@ $$\textbf{x} = \begin{bmatrix}x\cr y\end{bmatrix}$$
     - Known as the *camera matrix*
       - Can post-multiply $\mathbf{K}$ by $\mathbf{R}_1$ and pre-multiply $\mathbf{[R|t]}$ by $\mathbf{R}^T_1$
       - Impossible based on image measurements alone to know true orientation of sensor and true camera intrinsics
+  - $\mathbf{K}$ is upper-triangular
+  - Given full 3 x 4 camera matrix $\mathbf{P = K[R|t]}$, can compute upper-triangular matrix $\mathbf{K}$ using QR factorization
+    - [https://en.wikipedia.org/wiki/Triangular_matrix](https://en.wikipedia.org/wiki/Triangular_matrix)
+    - [https://en.wikipedia.org/wiki/QR_decomposition](https://en.wikipedia.org/wiki/QR_decomposition)
+  - How to write $\mathbf{K}$
+  $$\mathbf{K} = \begin{bmatrix} f_x&s&c_x \cr 0&f_y&c_y \cr 0&0&1 \end{bmatrix}$$
+    - independent *focal lengths* $f_x$ and $f_y$ for sensor dimensions $x$ and $y$
+    - $s$ encodes any possible *skew* between sensor axes not being mounted perpendicular to optical axis
+    - $(c_x, c_y)$ denotes *image center* expressed in pixel coordinates
+      - *image center* also called *principal point*
+        - In optics, principal points are 3D points usually inside the lens where the principal planes intersect the principal (optical) axis
+  - $\mathbf{K}$ could also be:
+    - Ignore the minus signs, just needed a way to reference this later
+  $$\mathbf{K} = \begin{bmatrix} f&s&c_x \cr 0&af&c_y \cr 0&0&1 \end{bmatrix}---------2.59$$
+    - *aspect ratio* $a$ made explicit and common focal length $f$ is used
+      - In practice: simpler form obtained by setting $a = 1$ and $s = 0$
+  - Often, setting origin at roughly center of the image $(c_x, c_y) = (W/2, H/2)$ result in usable camera model with single unknown $f$
+    - $W$ and $H$ are width and height of image respectively
+    ![Simplified Camera Instrinsics](./images/ch2/fig2_9_simp_camera_intrinsics.png)
+- A note on focal lengths
+  - focal length depends on units used to measure pixels
+  - if number pixel coordinates using integer values, say $[0, W) \times [0, H)$, the focal length $f$ and camera center $(c_x, c_y)$ in equation $(2.59)$ can be expressed as pixel values
+  ![Central projection, show relationship between 3D and 2D coordinates](./images/ch2/fig2_10_central_projection.png)
+  - Obey formula:
+    - Thank you [stack overflow post](https://tex.stackexchange.com/questions/288222/two-equations-in-one-line) for the help with this
+  $$\begin{equation}\tan\frac{\theta_H}{2} = \frac{W}{2f}\quad\mathrm{or}\quad f = \frac{W}{2} \left[ \tan \frac{\theta_H}{2} \right]^{-1}\end{equation}$$
+  - For traditional 35mm film camera (active exposure area of 24mm x 26mm) have $W =$ 36mm
+  - "stock" lens for SLR (single lens reflex) cameras is 50mm
+    - 85mm standard for portrait photography
+  - When working with digital camera, convenient to express $W$ in pixels to focal length $f$ can be used directly in calibration matrix $\mathbf{K}$ as in (2.59)
+  - Another possibility:
+    - scale pixel coordinates to go from $[-1, 1)$ along longer image dimension and $[-a^{-1}, a^{-1})$ along shorter axis
+      - $a \ge 1$ is *image aspect ratio*
+    - Accomplised using *modified normalized device coordinates*
+    $$
+    \begin{equation}
+    x'_s = (2x_s - W)/S
+    \quad\mathrm{and}\quad
+    y'_s = (2y_s - H)/S,
+    \quad\mathrm{where}\quad
+    S = \max(W,H)
+    \end{equation}
+    $$
+      - This is good because focal length $f$ and image center $(c_x, c_y)$ become independent of image resolution
+        - Useful when using multi-resolution, image-processing algorithms like image pyramids
+          - [https://en.wikipedia.org/wiki/Pyramid_%28image_processing%29](https://en.wikipedia.org/wiki/Pyramid_%28image_processing%29)
+      - Use of $S$ over $W$ matkes focal length same for landscape (horizontal) and portrait (vertical) pictures
+        - As is the case in 35mm photography
+    - Conversion between various focal length representations straightforward
+      - To go from unitless $f$ to one expressed in pixels, multiply by $W/2$
+      - From $f$ expressed in pixels to equivalent 35mm focal length, multiply by 18mm
+- Camera matrix
+  - Previously shown how to parameterize calibration matrix $\mathbf{K}$, can put camera intrinsics and extrinsics together to obtain single 3 x 4 *camera matrix*
+  $$\mathbf{P = K[R|t]}$$
+  - Sometimes preferable to use invertible 4 x 4 matrix obtained by not dropping last row in $\mathbf{P}$ matrix
+  $$\mathbf{\~P}=\begin{bmatrix}\mathbf{K}&\mathbf{0} \cr \mathbf{0}^T&1\end{bmatrix}\begin{bmatrix}\mathbf{R}&\mathbf{t} \cr \mathbf{0}^T&1\end{bmatrix} = \mathbf{\~KE}$$
+    - Where $\mathbf{E}$ is 3D rigid-body (Euclidean) transformation
+      - $\mathbf{\~K}$ is full-rank calibration matrix
+    - 4 x 4 camera matrix $\mathbf{\~P}$ can be used to map directly from 3D world coordinates $\mathbf{\bar{p}}_w = (x_w, y_w, z_w, 1)$ to screen coordinates (plus disparity), $\mathbf{x}_s = (x_s, y, 1, d)$
+    $$\mathbf{x}_s \sim \mathbf{\~P\bar{p}}_w$$
+      - Where $\sim$ indicates equality up to scale
