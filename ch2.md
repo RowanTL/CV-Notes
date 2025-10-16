@@ -416,6 +416,8 @@ $$\textbf{x} = \begin{bmatrix}x\cr y\end{bmatrix}$$
     - Simplest model is orthography
     - More common model is perspective (more accurately models behavior of real cameras)
 - Orthography and para-perspective
+  - Perspective camera
+    - [https://www.youtube.com/watch?v=2l__8MQJ4AA](https://www.youtube.com/watch?v=2l__8MQJ4AA)
   - Orthographic projections simply drop the $z$ component of 3D coordinate point to obtain 2D point $\mathbf{x}$
     - $\mathbf{p}$ to denote 3D points and $\mathbf{x}$ to denote 2D points
   $$\mathbf{x = [I_{2\times2}|0]p}$$
@@ -590,11 +592,47 @@ $$\textbf{x} = \begin{bmatrix}x\cr y\end{bmatrix}$$
       - From $f$ expressed in pixels to equivalent 35mm focal length, multiply by 18mm
 - Camera matrix
   - Previously shown how to parameterize calibration matrix $\mathbf{K}$, can put camera intrinsics and extrinsics together to obtain single 3 x 4 *camera matrix*
-  $$\mathbf{P = K[R|t]}$$
+  $$\mathbf{P = K \left[ R \quad t \right]}$$
   - Sometimes preferable to use invertible 4 x 4 matrix obtained by not dropping last row in $\mathbf{P}$ matrix
   $$\mathbf{\~P}=\begin{bmatrix}\mathbf{K}&\mathbf{0} \cr \mathbf{0}^T&1\end{bmatrix}\begin{bmatrix}\mathbf{R}&\mathbf{t} \cr \mathbf{0}^T&1\end{bmatrix} = \mathbf{\~KE}$$
     - Where $\mathbf{E}$ is 3D rigid-body (Euclidean) transformation
       - $\mathbf{\~K}$ is full-rank calibration matrix
     - 4 x 4 camera matrix $\mathbf{\~P}$ can be used to map directly from 3D world coordinates $\mathbf{\bar{p}}_w = (x_w, y_w, z_w, 1)$ to screen coordinates (plus disparity), $\mathbf{x}_s = (x_s, y, 1, d)$
     $$\mathbf{x}_s \sim \mathbf{\~P\bar{p}}_w$$
-      - Where $\sim$ indicates equality up to scale
+    - Where $\sim$ indicates equality up to scale
+    - Note: After multiplication by $\mathbf{\~P}$, the vector is divided by the *third* element of the vector to obtain the normalized form $\mathbf{x}_s = (x_s, y_s, 1, d)$
+- Plane plus parallax (projective depth)
+  - When using 4 x 4 matrix $\mathbf{\~P}$, freedom to remap last row to whatever suits our purpose
+    - Last row of $\mathbf{\~P}$ as $\mathbf{p}_3 = s_3[\mathbf{\^n}_0|c_0]$ where $||\mathbf{\^n_0}|| = 1$
+    $$\begin{equation}d = \frac{s_3}{z}(\mathbf{\^n_0} \cdot \mathbf{p}_w + c_0)\end{equation}$$
+    - Where $z = \mathbf{p}_2 \cdot \mathbf{\bar{p}}_w = \mathbf{r}_z \cdot (\mathbf{p}_w - mathbf{c})$ is distance of $\mathbf{p}_w$ from camera center $C$ along opical axis $Z$
+      - Interpret $d$ as *projective disparity* or *projective depth* of 3D scene point $\mathbf{p}_w$ from *reference plane* $\mathbf{\~n}_0 \cdot \mathbf{p}_w + c_0 = 0$
+        - projective depth also called *parallax* in reconstruction algorithms that use term *plane plus parallax*
+  - Setting $\mathbf{\^n} = 0$ and $c_0 = 1$ (putting reference plane at infinity) results in more standard $d=1/z$ version of disparity
+  - Another way to see this: invert $\mathbf{\~P}$ matrix so can map pixels plus disparity directly back to 3D points
+  $$\mathbf{\~p}_w = \mathbf{\~P}^{-1}\mathbf{x}_s$$
+  - In general, can choose $\mathbf{\~P}$ to have whatever form is convenient
+    - i.e. sample space using arbitary projection
+    - good for setting up multi-view stereo reconstruction algorithms bc allows sweep a series of planes through space with a variable (projective) sampling that best matches the sensed image motions
+- Mapping from one camera to another
+  - What happens when take two images of 3D scene from different camera positions or orientations?
+  - Using full rank 4 x 4 camera matrix $\mathbf{\~P = \~KE}$, can write projection from world to screen coordinates as:
+  $$\mathbf{\~x}_0 \sim \mathbf{\~K}_0\mathbf{E}_0\mathbf{p = \~P}_0\mathbf{p}$$
+  - Assuming know z-buffer or disparity value $d_0$ for a pixel in one image, can compute 3D point location $\mathbf{p}$ using:
+  $$\mathbf{p} \sim \mathbf{E}^{-1}_0\mathbf{\~K}^{-1}_0\mathbf{\~x}_0$$
+  - project it into another image yielding:
+  $$\begin{equation}\mathbf{\tilde{x}}_1 \sim \tilde{\mathbf{K}}_1 \mathbf{E}_1 \mathbf{p} = \tilde{\mathbf{K}}_1 \mathbf{E}_1 \mathbf{E}_0^{-1} \tilde{\mathbf{K}}_0^{-1} \mathbf{\tilde{x}}_0 = \tilde{\mathbf{P}}_1 \tilde{\mathbf{P}}_0^{-1} \mathbf{\tilde{x}}_0 = \mathbf{M}_{10} \mathbf{\tilde{x}}_0\end{equation}$$
+  - For regular photographic image, no access do depth coordinates
+  - for *planar scene* (3), can replace last of $\mathbf{P}_0$ with a general *plane equation* $\mathbf{\^n}_0 \cdot \mathbf{p} + c_0$ that maps points onto the plane to $d_0 = 0$
+    - $d_0 =  0$, can ignore last column of $\mathbf{M}_{10}$ in (4) and also its last row
+      - Do not care about final z-buffer depth
+    - Mapping equation reduced to:
+    $$\begin{equation}\mathbf{\~x}_1 \sim \mathbf{\~H}_{10}\mathbf{\~x}_0\end{equation}$$
+    - Where $\mathbf{\~H}_{10}$ is a general 3 x 3 homography matrix and $\mathbf{\~x}_1$ and $\mathbf{\~x}_0$ are now 2D homogeneous coordinates (i.e. 3-vectors)
+      - Justifies the use of 8-parameter homography as a general alignment model for mosaics of planar scenes
+  - Other special case when do not need to know depth to perform inter-camera mapping is when camera undergoing pure rotation
+    - i.e. $\mathbf{t}_0 = \mathbf{t}_1$
+  $$\begin{equation}\mathbf{\tilde{x}}_1 \sim \mathbf{K}_1 \mathbf{R}_1 \mathbf{R}_0^{-1} \mathbf{K}_0^{-1} \mathbf{\tilde{x}}_0 = \mathbf{K}_1 \mathbf{R}_{10} \mathbf{K}_0^{-1} \mathbf{\tilde{x}}_0,\end{equation}$$
+  - Can again be represented with 3 x 3 homography
+    - [https://en.wikipedia.org/wiki/Homography_(computer_vision)](https://en.wikipedia.org/wiki/Homography_(computer_vision))
+- Object-centered projection
