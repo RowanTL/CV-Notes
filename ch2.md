@@ -636,3 +636,76 @@ $$\textbf{x} = \begin{bmatrix}x\cr y\end{bmatrix}$$
   - Can again be represented with 3 x 3 homography
     - [https://en.wikipedia.org/wiki/Homography_(computer_vision)](https://en.wikipedia.org/wiki/Homography_(computer_vision))
 - Object-centered projection
+  - With long focal lenses, difficult estimate focal length from image measurements alone
+  - focal length & distance to object highly correlated
+  - See ambiguity in calibration matrix $\mathbf{K}$
+  $$
+    \begin{equation}
+      x_s = f\frac{\mathbf{r}_x \cdot \mathbf{p} + t_x}{\mathbf{r}_z \cdot \mathbf{p} + t_z} + c_x
+    \end{equation}
+  $$
+  $$
+    \begin{equation}
+      y_s = f\frac{\mathbf{r}_y \cdot \mathbf{p} + t_y}{\mathbf{r}_z \cdot \mathbf{p} + t_z} + c_y
+    \end{equation}
+  $$
+  - where $\mathbf{r}_x$, $\mathbf{r}_y$, and $\mathbf{r}_z$ are the three rows of $\mathbf{R}$
+    - Believe $\mathbf{R}$ is the rotation matrix
+  - if $t_z \gg ||\mathbf{p}||$ (distance to object center much greater than size of the object)
+    - denominator $\mathbf{r}_z \cdot \mathbf{p} + t_z$ is approximately $t_z$
+    - overall scale of projected object depends on ratio of $f$ to $t_z$
+    - difficult to disentangle these two quantities
+- Lens distortions
+  - above models assume cameras obey a *linear* projection
+    - straight lines in world result in straight lines in the image
+  - many wide-angle lenses have noticable *radial distortion*
+    - visible curvature in projection of straight lines
+    - Not difficult to account for in practice
+  - Simple quartic model run through
+    - Let $(x_c, y_c)$ be pixel coordinates obtainer *after* perspective division but *before* scaling by focal length $f$ and shifting image center by $(c_x, c_y)$
+      - perspective division conversion from homogeneous coordinates to regular coordinates
+      - Notice how the equation below doesn't have $+ c_x$ or $+ c_y$ nor being multiplied by $f$ unlike the equations 7 and 8 above
+  $$
+  \begin{equation}
+    x_c = \frac{\mathbf{r}_x \cdot \mathbf{p} + t_x}{\mathbf{r}_z \cdot \mathbf{p} + t_z}
+  \end{equation}
+  $$
+  $$
+  \begin{equation}
+    y_c = \frac{\mathbf{r}_y \cdot \mathbf{p} + t_y}{\mathbf{r}_z \cdot \mathbf{p} + t_z}
+  \end{equation}
+  $$
+  - radial distortion models states coordinates in observed images displaced towards (*barrel* distortion) or away (*pincushion* distortion) from the image center by an amount proportional to their radial distance
+    - Simplest radial distortion models use low-order polynomials
+  $$
+    \begin{equation}
+      \hat{x}_c = x_c(1 + \kappa_1r^2_c + \kappa_2r^4_c)
+    \end{equation}
+  $$
+  $$
+    \begin{equation}
+      \hat{y}_c = y_c(1 + \kappa_1r^2_c + \kappa_2r^4_c)
+    \end{equation}
+  $$
+  - Where $r^2_c = x^2_c + y^2_c$ and $\kappa_1$ and $\kappa_2$ are *radial distortion parameters*
+    - Sometimes has *tangential* components
+      - usually ignored bc can lead to less stable estimates
+  - After radial distortion step:
+  $$
+    \begin{equation}
+      x_s = f\^x_c + c_x
+    \end{equation}
+  $$
+  $$
+    \begin{equation}
+      y_s = f\^y_c + c_y
+    \end{equation}
+  $$
+  - Fisheye lenses require a model that differs from traditional polynomail models of radial distortion
+    - Fisheye lenses behave as *equi-distance* projectors of angles away from the optical axis
+  ![Radial Lens Distortion Examples](./images/ch2/fig2_13_radial_lens_distortions.png)
+  $$
+    \begin{equation}
+      r = f\theta
+    \end{equation}
+  $$
