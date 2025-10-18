@@ -703,9 +703,32 @@ $$\textbf{x} = \begin{bmatrix}x\cr y\end{bmatrix}$$
   $$
   - Fisheye lenses require a model that differs from traditional polynomail models of radial distortion
     - Fisheye lenses behave as *equi-distance* projectors of angles away from the optical axis
+      - Same as *polar projection*
+
   ![Radial Lens Distortion Examples](./images/ch2/fig2_13_radial_lens_distortions.png)
   $$
     \begin{equation}
       r = f\theta
     \end{equation}
   $$
+  - Mostly linear mapping between distance from center (pixels) and viewing angle
+    - Such lense sometimes called *f-theta lenses*
+  - For larger, less regular distortions, a parametric distortion model using splines may be necessary
+    - [basic definition of a spline](https://www.doc.ic.ac.uk/~dfg/graphics/graphics2010/GraphicsHandout05.pdf)
+
+# 2.2) Photometric image formation
+- How to handle discrete color or intensity values?
+  - Where come from?
+  - How relate to lighting in the environment, surface properties and geometry, camera optics, and sensor properties?
+
+## 2.2.1) Lighting
+- Point and area light sources
+- Point light source originates at a single location in space
+  - i.e a small light bulb (tangible location in space)
+  - or the sun (located at infinity)
+    - Sun may also be treated as an area source in some applications (*penumbras*)
+  - Has intensity and color spectrum
+    - i.e. a distribution over wavelengths $L(\lambda)$
+  - Intensity of light source falls off with square of distance between source and object being lit
+  - Sometimes a light source may also have directional falloff (dependence), ignore this in our simplified model
+  
