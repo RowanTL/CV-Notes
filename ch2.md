@@ -731,4 +731,5 @@ $$\textbf{x} = \begin{bmatrix}x\cr y\end{bmatrix}$$
     - i.e. a distribution over wavelengths $L(\lambda)$
   - Intensity of light source falls off with square of distance between source and object being lit
   - Sometimes a light source may also have directional falloff (dependence), ignore this in our simplified model
-  
+  - Simple area light (like fluoresent bulbs with a diffuser) modeled as finite rectangular area emitting light equally in all directions
+    - When distribution is strongly directional, 4D lightfield can be used instead
