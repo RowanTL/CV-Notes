@@ -733,3 +733,41 @@ $$\textbf{x} = \begin{bmatrix}x\cr y\end{bmatrix}$$
   - Sometimes a light source may also have directional falloff (dependence), ignore this in our simplified model
   - Simple area light (like fluoresent bulbs with a diffuser) modeled as finite rectangular area emitting light equally in all directions
     - When distribution is strongly directional, 4D lightfield can be used instead
+- More complex light distribution measures:
+  - *Incident Illumination* on an object sitting in an outdoor courtyard
+    - Incident Illumination definition: Light falling onto a surface
+  - Can often by represented using an *environment map*
+  - Maps incident light directions $\mathbf{\^v}$ to color values (or wavelength, $\lambda$) and equivalent to assuming all light sources are at infinity
+  $$
+    \begin{equation}
+      L(\mathbf{\^v}; \lambda)
+    \end{equation}
+  $$
+  - Environment maps represented as:
+    - collection of cubical faces
+    - single longitude-latitude map
+    - or as image of a reflecting sphere
+  - To get real-world environment map:
+    - take image of reflective mirrored sphere and unwrap image onto desired environment map
+
+## 2.2.2) Reflectance and shading
+
+- When light hits object's surface, is scattered and reflected
+![light scattering figure](./images/ch2/fig2_15_light_scattering.png)
+  - Will talk about *global illumination* at some point
+
+### The Bidirectional Reflectance Distribution Function (BDRF)
+
+- Most general model of light scattering
+- 4D function
+  - Describes how much of each wavelength arriving at *incident* direction $\mathbf{\^v}_i$ is emitted in a *reflected* direction $\mathbf{\^v}_r$
+  $$
+    \begin{equation}
+      f_r(\theta_i, \phi_i, \theta_r, \phi_r; \lambda)
+    \end{equation}
+  $$
+- BDRF reciprocal
+  - Interchange roles of $\mathbf{\^v}_i$ and $\mathbf{\^v}_r$ and get same answer
+    - Sometimes called *Helmholtz reciprocity*
+- Most surfaces *isotropic*
+  - No preffered directions on the surface as far as light transport is concerned
