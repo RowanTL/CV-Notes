@@ -771,3 +771,23 @@ $$\textbf{x} = \begin{bmatrix}x\cr y\end{bmatrix}$$
     - Sometimes called *Helmholtz reciprocity*
 - Most surfaces *isotropic*
   - No preffered directions on the surface as far as light transport is concerned
+  - Exception: *anistropic* surfaces (like scratched aluminum where reflectance depends on light orientation relative to direction of scratches)
+  - For isotropic material, BRDF simplified to:
+  $$
+    \begin{equation}
+      f_r(\theta_i, \theta_r, |\phi_r = \phi_i|; \lambda) \quad \mathrm{or} \quad f_r(\mathbf{\^v}_i, \mathbf{\^v}_r, \mathbf{\^n}; \lambda)
+    \end{equation}
+  $$
+    - quantities $\theta_i, \theta_r$ and $\phi_r - \phi_i$ can be computed from directions $\mathbf{\^v}_i$, $\mathbf{\^v}_r$, $\mathbf{\^n}$
+- To calculate the amount of light exiting a surface point $\mathbf{p}$ in direction $\mathbf{\^v}_r$ under given lighting condition, integrate product of incoming light $L_i(\mathbf{\^v}_i; \lambda)$ with the BRDF (some call a *convolution*)
+- Taking into account *foreshortening* factor $\cos^+\theta_i$
+$$
+  \begin{equation}
+    L_r(\mathbf{\^v}_r;\lambda) = \int L_i(\mathbf{\^v}_i; \lambda)f_r(\mathbf{\^v}_i, \mathbf{\^v}_r, \mathbf{\^n}; \lambda)\cos^+\theta_i d\mathbf{\^v}_i
+  \end{equation}
+$$
+$$
+  \begin{equation}
+    \cos^+\theta_i = \max(0, \cos\theta_i)
+  \end{equation}
+$$
